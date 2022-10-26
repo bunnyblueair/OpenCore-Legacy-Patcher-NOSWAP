@@ -40,7 +40,7 @@ jobs:
       - name: build
         run: cd OpenCore-Legacy-Patcher && pip3 install -r requirements.txt &&pip3 install pyinstaller && python3 Build-Binary.command
       - name: test
-        run : du -h OpenCore-Legacy-Patcher/dist/OpenCore-Patcher.app && mv OpenCore-Legacy-Patcher/dist/OpenCore-Patcher.app/Contents/Resources/payloads.dmg OpenCore-Legacy-Patcher/dist/OpenCore-Patcher.app/Contents/MacOS/ 
+        run : du -h OpenCore-Legacy-Patcher/dist/OpenCore-Patcher.app &&rm OpenCore-Legacy-Patcher/dist/OpenCore-Patcher.app/Contents/MacOS/payloads.dmg && mv OpenCore-Legacy-Patcher/dist/OpenCore-Patcher.app/Contents/Resources/payloads.dmg OpenCore-Legacy-Patcher/dist/OpenCore-Patcher.app/Contents/MacOS/ 
       - name: pack
         run: zip -r OpenCore.zip  OpenCore-Legacy-Patcher/dist/OpenCore-Patcher.app/
       - name: Upload App to Artifacts
