@@ -34,7 +34,10 @@ jobs:
         run: git clone https://github.com/dortania/OpenCore-Legacy-Patcher.git
 
 
+
       # Runs a set of commands using the runners shell
+      - name: patch 
+        run: cp build.py OpenCore-Legacy-Patcher/resources/
       - name: build
         run: cd OpenCore-Legacy-Patcher && pip3 install -r requirements.txt &&pip3 install pyinstaller && python3 Build-Binary.command
       - name: test
