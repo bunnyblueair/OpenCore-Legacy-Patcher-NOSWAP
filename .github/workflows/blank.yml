@@ -40,7 +40,7 @@ jobs:
       - name: test
         run : du -h OpenCore-Legacy-Patcher/dist/OpenCore-Patcher.app && rm OpenCore-Legacy-Patcher/dist/OpenCore-Patcher.app/Contents/Resources/payloads.dmg 
       - name: pack
-        run: rm zip -r OpenCore.zip  OpenCore-Legacy-Patcher/dist/OpenCore-Patcher.app/
+        run: zip -r OpenCore.zip  OpenCore-Legacy-Patcher/dist/OpenCore-Patcher.app/
       - name: dist
         run: git status &&git config --local user.email "41898282+github-actions[bot]@users.noreply.github.com" &&  git config --local user.name "github-actions[bot]" &&git add OpenCore.zip  &&git commit -m "update by bot"
       - uses: ad-m/github-push-action@master
