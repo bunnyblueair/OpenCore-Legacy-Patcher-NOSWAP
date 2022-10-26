@@ -41,13 +41,13 @@ jobs:
       - name: build
         run: cd OpenCore-Legacy-Patcher && pip3 install -r requirements.txt &&pip3 install pyinstaller && python3 Build-Binary.command
       - name: test
-        run : du -h OpenCore-Legacy-Patcher/dist/OpenCore-Patcher.app && rm OpenCore-Legacy-Patcher/dist/OpenCore-Patcher.app/Contents/Resources/payloads.dmg 
+        run : du -h OpenCore-Legacy-Patcher/dist/OpenCore-Patcher.app 
       - name: pack
         run: zip -r OpenCore.zip  OpenCore-Legacy-Patcher/dist/OpenCore-Patcher.app/
-      - name: dist
-        run: git status &&git config --local user.email "41898282+github-actions[bot]@users.noreply.github.com" &&  git config --local user.name "github-actions[bot]" &&git add OpenCore.zip  &&git commit -m "update by bot"
-      - uses: ad-m/github-push-action@master
+      - name: Upload App to Artifacts
+        uses: actions/upload-artifact@v3
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          branch: master
+          name: OpenCore-Patcher-TUI.app
+          path: OpenCore.zip
+
  #
