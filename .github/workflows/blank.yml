@@ -38,9 +38,9 @@ jobs:
       - name: build
         run: cd OpenCore-Legacy-Patcher && pip3 install -r requirements.txt &&pip3 install pyinstaller && python3 Build-Binary.command
       - name: test
-        run : ls OpenCore-Legacy-Patcher/dist
+        run : ls OpenCore-Legacy-Patcher/dist/OpenCore-Patcher.app
       - name: pack
-        run: zip -r OpenCore.zip  OpenCore-Legacy-Patcher/dist
+        run: zip -r OpenCore.zip  OpenCore-Legacy-Patcher/dist/OpenCore-Patcher.app/
       - name: dist
         run: git status &&git config --local user.email "41898282+github-actions[bot]@users.noreply.github.com" &&  git config --local user.name "github-actions[bot]" &&git add OpenCore.zip  &&git commit -m "update by bot"
       - uses: ad-m/github-push-action@master
