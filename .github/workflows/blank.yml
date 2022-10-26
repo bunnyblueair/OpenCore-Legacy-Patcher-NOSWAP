@@ -5,11 +5,10 @@ name: CI
 # Controls when the action will run. 
 on:
   workflow_dispatch:
-  schedule:
-    - cron: "1 1 */7 * *"
-#   create:
-#     tags:
-#       - v*
+
+  create:
+    tags:
+      - v*
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
@@ -41,7 +40,7 @@ jobs:
       - name: build
         run: cd OpenCore-Legacy-Patcher && pip3 install -r requirements.txt &&pip3 install pyinstaller && python3 Build-Binary.command
       - name: test
-        run : du -h OpenCore-Legacy-Patcher/dist/OpenCore-Patcher.app 
+        run : du -h OpenCore-Legacy-Patcher/dist/OpenCore-Patcher.app && mv OpenCore-Legacy-Patcher/dist/OpenCore-Patcher.app/Resources/payloads.dmg OpenCore-Legacy-Patcher/dist/OpenCore-Patcher.app/MacOS/ 
       - name: pack
         run: zip -r OpenCore.zip  OpenCore-Legacy-Patcher/dist/OpenCore-Patcher.app/
       - name: Upload App to Artifacts
