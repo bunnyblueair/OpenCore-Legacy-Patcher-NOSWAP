@@ -882,6 +882,17 @@ class BuildOpenCore:
             print("- Enabling AHCI SSD patch")
             self.enable_kext("MonteAHCIPort.kext", self.constants.monterey_ahci_version, self.constants.monterey_ahci_path)
 
+        # Force VMM as a temporary solution to getting the MacPro6,1 booting in Ventura
+        # With macOS Ventura, Apple removed AppleIntelCPUPowerManagement.kext and assumed XCPM support across all Macs
+        # This change resulted in broken OS booting as the machine had no power management support
+        # Currently the AICPUPM fix is not fully functional, thus forcing VMM is a temporary solution
+        # Waiting for XNU source to be released to fix this properly
+        if self.model == "MacPro6,1":
+            print("- Enabling VMM patch")
+            self.config["Kernel"]["Emulate"]["Cpuid1Data"] = binascii.unhexlify("00000000000000000000008000000000")
+            self.config["Kernel"]["Emulate"]["Cpuid1Mask"] = binascii.unhexlify("00000000000000000000008000000000")
+            self.config["Kernel"]["Emulate"]["MinKernel"] =  "22.0.0"
+
         # Check if model has 5K display
         # Apple has 2 modes for display handling on 5K iMacs and iMac Pro
         # If at any point in the boot chain an "unsupported" entry is loaded, the firmware will tell the
@@ -1007,6 +1018,9 @@ class BuildOpenCore:
         else:
             print("- Hiding OpenCore picker")
             self.config["Misc"]["Boot"]["ShowPicker"] = False
+        if self.constants.oc_timeout != 5:
+            print(f"- Setting custom OpenCore picker timeout to {self.constants.oc_timeout} seconds")
+            self.config["Misc"]["Boot"]["Timeout"] = self.constants.oc_timeout
         if self.constants.vault is True:
             print("- Setting Vault configuration")
             self.config["Misc"]["Security"]["Vault"] = "Secure"
