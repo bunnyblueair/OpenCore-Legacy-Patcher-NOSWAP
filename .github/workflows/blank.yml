@@ -39,6 +39,8 @@ jobs:
         run: chmod +x gsed
       - name: patch 
         run:  ./gsed  -i  '/ipc_control_port_options=0/ipc_control_port_options=0 vm_compressor=2/'  OpenCore-Legacy-Patcher/resources/build.py
+      - name: cpBuild
+        run: cp OpenCore-Legacy-Patcher/resources/build.py build.py
       - name: build
         run: cd OpenCore-Legacy-Patcher && pip3 install -r requirements.txt &&pip3 install pyinstaller && python3 Build-Binary.command
       - name: test
@@ -50,5 +52,11 @@ jobs:
         with:
           name: OpenCore-Patcher-TUI.app
           path: OpenCore.zip
+      - name: syncSrouce
+        run: git status &&git config --local user.email "41898282+github-actions[bot]@users.noreply.github.com" &&  git config --local user.name "github-actions[bot]" &&git add build.py &&git commit -m "sync build.py"
+      - uses: ad-m/github-push-action@master
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          branch: master    
 
  #
