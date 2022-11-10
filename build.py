@@ -109,21 +109,20 @@ class BuildOpenCore:
             # Essential kexts
             ("Lilu.kext", self.constants.lilu_version, self.constants.lilu_path, lambda: True),
             ("WhateverGreen.kext", self.constants.whatevergreen_version, self.constants.whatevergreen_path, lambda: self.constants.allow_oc_everywhere is False and self.constants.serial_settings != "None"),
-            ("RestrictEvents.kext", self.constants.restrictevents_version, self.constants.restrictevents_path, lambda: self.model in model_array.MacPro),
             ("SMC-Spoof.kext", self.constants.smcspoof_version, self.constants.smcspoof_path, lambda: self.constants.allow_oc_everywhere is False and self.constants.serial_settings != "None"),
             # CPU patches
             ("AAAMouSSE.kext", self.constants.mousse_version, self.constants.mousse_path, lambda: smbios_data.smbios_dictionary[self.model]["CPU Generation"] <= cpu_data.cpu_data.penryn.value),
-            (
-                "telemetrap.kext",
-                self.constants.telemetrap_version,
-                self.constants.telemetrap_path,
-                lambda: smbios_data.smbios_dictionary[self.model]["CPU Generation"] <= cpu_data.cpu_data.penryn.value,
-            ),
             (
                 "CPUFriend.kext",
                 self.constants.cpufriend_version,
                 self.constants.cpufriend_path,
                 lambda: self.model not in ["iMac7,1", "Xserve2,1", "Dortania1,1"] and self.constants.disallow_cpufriend is False and self.constants.serial_settings != "None",
+            ),
+            (
+                "telemetrap.kext",
+                self.constants.telemetrap_version,
+                self.constants.telemetrap_path,
+                lambda: smbios_data.smbios_dictionary[self.model]["CPU Generation"] <= cpu_data.cpu_data.penryn.value,
             ),
             # Legacy audio
             (
@@ -194,10 +193,6 @@ class BuildOpenCore:
             if self.constants.disable_xcpm is True:
                 # Only inject on older OSes if user requests
                 self.get_item_by_kv(self.config["Kernel"]["Add"], "BundlePath", "ASPP-Override.kext")["MinKernel"] = ""
-
-        if self.model in ["MacBookPro6,1", "MacBookPro6,2", "MacBookPro9,1", "MacBookPro10,1"]:
-            # Modded RestrictEvents with displaypolicyd blocked to fix dGPU switching
-            self.enable_kext("RestrictEvents.kext", self.constants.restrictevents_mbp_version, self.constants.restrictevents_mbp_path)
 
         if not self.constants.custom_model and self.constants.computer.ethernet:
             for controller in self.constants.computer.ethernet:
@@ -813,7 +808,7 @@ class BuildOpenCore:
         if smbios_data.smbios_dictionary[self.model]["CPU Generation"] < cpu_data.cpu_data.skylake.value:
             if self.model.startswith("MacBook"):
                 # These units got force touch early, so ignore them
-                if self.model not in ["MacBookPro11,4", "MacBookPro11,5", "MacBook8,1"]:
+                if self.model not in ["MacBookPro11,4", "MacBookPro11,5", "MacBookPro12,1", "MacBook8,1"]:
                     self.enable_kext("AppleUSBTopCase.kext", self.constants.topcase_version, self.constants.top_case_path)
                     self.get_kext_by_bundle_path("AppleUSBTopCase.kext/Contents/PlugIns/AppleUSBTCButtons.kext")["Enabled"] = True
                     self.get_kext_by_bundle_path("AppleUSBTopCase.kext/Contents/PlugIns/AppleUSBTCKeyboard.kext")["Enabled"] = True
@@ -917,23 +912,6 @@ class BuildOpenCore:
         except KeyError:
             pass
 
-        # With macOS 13, Ventura, Apple removed the Skylake graphics stack. However due to the lack of inovation
-        # with the Kaby lake and Coffee Lake iGPUs, we're able to spoof ourselves to natively support them
-
-        # Currently the following iGPUs we need to be considerate of:
-        # - HD530 (mobile):  0x191B0006
-
-
-        # | GPU      | Model            | Device ID | Platform ID | New Device ID | New Platform ID |
-        # | -------- | ---------------- | --------- | ----------- | ------------- | --------------- |
-        # | HD 515   | MacBook9,1       | 0x191E    | 0x131E0003  |
-        # | Iris 540 | MacBookPro13,1/2 | 0x1926    | 0x19160002  | 0x5926        | 0x59260002
-        # | HD 530   | MacBookPro13,3   | 0x191B    | 0x191B0006  | 0x591B        | 0x591B0006      |
-        # | HD 530   | iMac17,1         | 0x1912    | 0x19120001  | 0x5912        | 0x59120003      |
-
-
-
-
         if self.constants.xhci_boot is True:
             print("- Adding USB 3.0 Controller Patch")
             print("- Adding XhciDxe.efi and UsbBusDxe.efi")
@@ -996,6 +974,57 @@ class BuildOpenCore:
             self.config["UEFI"]["Quirks"]["ForgeUefiSupport"] = True
             self.config["UEFI"]["Quirks"]["ReloadOptionRoms"] = True
 
+        # RestrictEvents handling
+        block_args = ""
+        if self.model in ["MacBookPro6,1", "MacBookPro6,2", "MacBookPro9,1", "MacBookPro10,1"]:
+            block_args += "gmux,"
+        if self.model in model_array.MacPro:
+            print("- Disabling memory error reporting")
+            block_args += "pcie,"
+        gpu_dict = []
+        if not self.constants.custom_model:
+            gpu_dict = self.constants.computer.gpus
+        else:
+            if self.model in smbios_data.smbios_dictionary:
+                gpu_dict = smbios_data.smbios_dictionary[self.model]["Stock GPUs"]
+        for gpu in gpu_dict:
+            if not self.constants.custom_model:
+                gpu = gpu.arch
+            if gpu in [
+                device_probe.Intel.Archs.Ivy_Bridge,
+                device_probe.Intel.Archs.Haswell,
+                device_probe.NVIDIA.Archs.Kepler,
+            ]:
+                print("- Disabling mediaanalysisd")
+                block_args += "media,"
+                break
+        if block_args.endswith(","):
+            block_args = block_args[:-1]
+
+        if block_args != "":
+            print(f"- Setting RestrictEvents block arguments: {block_args}")
+            if self.get_kext_by_bundle_path("RestrictEvents.kext")["Enabled"] is False:
+                self.enable_kext("RestrictEvents.kext", self.constants.restrictevents_version, self.constants.restrictevents_path)
+            self.config["NVRAM"]["Add"]["4D1FDA02-38C7-4A6A-9CC6-4BCCA8B30102"]["revblock"] = block_args
+
+        patch_args = ""
+        if self.get_item_by_kv(self.config["Kernel"]["Patch"], "Comment", "Reroute kern.hv_vmm_present patch (1)")["Enabled"] is True and self.constants.set_content_caching is True:
+            print("- Fixing Content Caching support")
+            patch_args += "content-caching,"
+
+        if patch_args.endswith(","):
+            patch_args = patch_args[:-1]
+
+        if block_args != "" and patch_args == "":
+            # Disable unneeded Userspace patching (cs_validate_page is quite expensive)
+            patch_args = "none"
+
+        if patch_args != "":
+            print(f"- Setting RestrictEvents patch arguments: {patch_args}")
+            if self.get_kext_by_bundle_path("RestrictEvents.kext")["Enabled"] is False:
+                self.enable_kext("RestrictEvents.kext", self.constants.restrictevents_version, self.constants.restrictevents_path)
+            self.config["NVRAM"]["Add"]["4D1FDA02-38C7-4A6A-9CC6-4BCCA8B30102"]["revpatch"] = patch_args
+
         # DEBUG Settings
         if self.constants.verbose_debug is True:
             print("- Enabling Verbose boot")
@@ -1006,8 +1035,6 @@ class BuildOpenCore:
             # Disabled due to macOS Monterey crashing shortly after kernel init
             # Use DebugEnhancer.kext instead
             # self.config["NVRAM"]["Add"]["7C436110-AB2A-4BBB-A880-FE41995C9F82"]["boot-args"] += " msgbuf=1048576"
-        print("- Enable Beta Lilu support")
-        self.config["NVRAM"]["Add"]["7C436110-AB2A-4BBB-A880-FE41995C9F82"]["boot-args"] += " -lilubetaall"
         if self.constants.opencore_debug is True:
             print("- Enabling DEBUG OpenCore")
             self.config["Misc"]["Debug"]["Target"] = 0x43
@@ -1028,8 +1055,8 @@ class BuildOpenCore:
         if self.constants.sip_status is False or self.constants.custom_sip_value:
             # Work-around 12.3 bug where Electron apps no longer launch with SIP lowered
             # Unknown whether this is intended behavior or not, revisit with 12.4
-            print("- Adding ipc_control_port_options=0  vm_compressor=2 to boot-args")
-            self.config["NVRAM"]["Add"]["7C436110-AB2A-4BBB-A880-FE41995C9F82"]["boot-args"] += " ipc_control_port_options=0 vm_compressor=2"
+            print("- Adding ipc_control_port_options=0 to boot-args")
+            self.config["NVRAM"]["Add"]["7C436110-AB2A-4BBB-A880-FE41995C9F82"]["boot-args"] += " ipc_control_port_options=0"
             # Adds AutoPkgInstaller for Automatic OpenCore-Patcher installation
             # Only install if running the GUI (AutoPkg-Assets.pkg requires the GUI)
             if self.constants.wxpython_variant is True:
@@ -1123,16 +1150,10 @@ class BuildOpenCore:
         if self.constants.nvram_write is False:
             print("- Disabling Hardware NVRAM Write")
             self.config["NVRAM"]["WriteFlash"] = False
-        if self.get_item_by_kv(self.config["Kernel"]["Patch"], "Comment", "Reroute kern.hv_vmm_present patch (1)")["Enabled"] is True and self.constants.set_content_caching is True:
-            # Add Content Caching patch
-            print("- Fixing Content Caching support")
-            if self.get_kext_by_bundle_path("RestrictEvents.kext")["Enabled"] is False:
-                self.enable_kext("RestrictEvents.kext", self.constants.restrictevents_version, self.constants.restrictevents_path)
-            self.config["NVRAM"]["Add"]["7C436110-AB2A-4BBB-A880-FE41995C9F82"]["boot-args"] += " -revasset"
         if self.get_kext_by_bundle_path("RestrictEvents.kext")["Enabled"] is False:
             # Ensure this is done at the end so all previous RestrictEvents patches are applied
             # RestrictEvents and EFICheckDisabler will conflict if both are injected
-            self.enable_kext("EFICheckDisabler.kext", self.constants.restrictevents_version, self.constants.efi_disabler_path)
+            self.enable_kext("EFICheckDisabler.kext", "", self.constants.efi_disabler_path)
         if self.constants.set_vmm_cpuid is True:
             # Should be unneeded with our sysctl VMM patch, however for reference purposes we'll leave it here
             # Ref: https://forums.macrumors.com/threads/opencore-on-the-mac-pro.2207814/
@@ -1277,9 +1298,9 @@ class BuildOpenCore:
             # Thus resulting in an infinite loop as Lilu tries to request the Board ID
             # To resolve this, set PlatformInfo -> DataHub -> BoardProduct and enable UpdateDataHub
 
-            # Note 1: Only apply if system is UEFI 1.2, this is generally Ivy Bridge and older, excluding MacPro6,1
+            # Note 1: Only apply if system is UEFI 1.2, this is generally Ivy Bridge and older
             # Note 2: Flipping 'UEFI -> ProtocolOverrides -> DataHub' will break hibernation
-            if (smbios_data.smbios_dictionary[self.model]["CPU Generation"] <= cpu_data.cpu_data.ivy_bridge.value and self.model != "MacPro6,1"):
+            if (smbios_data.smbios_dictionary[self.model]["CPU Generation"] <= cpu_data.cpu_data.ivy_bridge.value and self.model):
                 print("- Detected UEFI 1.2 or older Mac, updating BoardProduct")
                 self.config["PlatformInfo"]["DataHub"]["BoardProduct"] = self.spoofed_board
                 self.config["PlatformInfo"]["UpdateDataHub"] = True
