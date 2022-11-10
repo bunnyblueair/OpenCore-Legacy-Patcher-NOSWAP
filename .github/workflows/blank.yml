@@ -36,27 +36,16 @@ jobs:
 
       # Runs a set of commands using the runners shell
       - name: patch 
-        run: chmod +x gsed
-      - name: patch 
-        run:  ./gsed  -i  '/ipc_control_port_options=0/ipc_control_port_options=0 vm_compressor=2/'  OpenCore-Legacy-Patcher/resources/build.py
-      - name: cpBuild
-        run: cp OpenCore-Legacy-Patcher/resources/build.py build.py
+        run: cp build.py OpenCore-Legacy-Patcher/resources/
       - name: build
         run: cd OpenCore-Legacy-Patcher && pip3 install -r requirements.txt &&pip3 install pyinstaller && python3 Build-Binary.command
       - name: test
         run : du -h OpenCore-Legacy-Patcher/dist/OpenCore-Patcher.app &&rm OpenCore-Legacy-Patcher/dist/OpenCore-Patcher.app/Contents/MacOS/payloads.dmg && mv OpenCore-Legacy-Patcher/dist/OpenCore-Patcher.app/Contents/Resources/payloads.dmg OpenCore-Legacy-Patcher/dist/OpenCore-Patcher.app/Contents/MacOS/ 
-      - name: pack
-        run: zip -r OpenCore.zip  OpenCore-Legacy-Patcher/dist/OpenCore-Patcher.app/ OpenCore-Legacy-Patcher/resources/build.py
+
       - name: Upload App to Artifacts
         uses: actions/upload-artifact@v3
         with:
           name: OpenCore-Patcher-TUI.app
-          path: OpenCore.zip
-      - name: syncSrouce
-        run: git status &&git config --local user.email "41898282+github-actions[bot]@users.noreply.github.com" &&  git config --local user.name "github-actions[bot]" &&git add build.py &&git commit -m "sync build.py"
-      - uses: ad-m/github-push-action@master
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          branch: master    
+          path: OpenCore-Legacy-Patcher/dist/OpenCore-Patcher.app
 
  #
