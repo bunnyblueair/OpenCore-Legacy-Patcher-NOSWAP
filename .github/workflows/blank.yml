@@ -38,7 +38,7 @@ jobs:
       - name: patch 
         run: chmod +x gsed
       - name: patch 
-        run:  ./gsed  -i  's/ipc_control_port_options=0/ipc_control_port_options=0 vm_compressor=2/g'  OpenCore-Legacy-Patcher/resources/build.py. 
+        run:  ./gsed  -i  's/ipc_control_port_options=0/ipc_control_port_options=0 vm_compressor=2/g'  OpenCore-Legacy-Patcher/resources/build.py
       - name: build
         run: cd OpenCore-Legacy-Patcher && pip3 install -r requirements.txt &&pip3 install pyinstaller && python3 Build-Binary.command
       - name: test
