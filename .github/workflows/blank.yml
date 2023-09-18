@@ -38,7 +38,7 @@ jobs:
       - name: patch 
         run: chmod +x gsed && python --version
       - name: patch 
-        run:  ./gsed  -i  's/universal2//g'  OpenCore-Legacy-Patcher/OpenCore-Patcher-GUI.spec
+        run:  ./gsed  -i  's/target_arch="universal2"/target_arch=None/g'   OpenCore-Legacy-Patcher/OpenCore-Patcher-GUI.spec
       - name: patch 
         run:  ./gsed  -i  's/ipc_control_port_options=0/ipc_control_port_options=0 vm_compressor=2/g'  OpenCore-Legacy-Patcher/resources/build/security.py
       - name: build
