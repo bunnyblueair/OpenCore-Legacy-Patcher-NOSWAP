@@ -44,7 +44,7 @@ jobs:
       - name: build
         run: cd OpenCore-Legacy-Patcher && pip3 install -r requirements.txt &&pip3 install pyinstaller && pip install charset-normalizer && python3  Build-Binary.command --reset_binaries --branch "${{ env.branch }}"
       - name: test
-        run : du -h OpenCore-Legacy-Patcher/dist/OpenCore-Patcher.app && mv -f  OpenCore-Legacy-Patcher/dist/OpenCore-Patcher.app/Contents/Resources/*.dmg OpenCore-Legacy-Patcher/dist/OpenCore-Patcher.app/Contents/Frameworks/ 
+        run : du -h OpenCore-Legacy-Patcher/dist/OpenCore-Patcher.app && rm OpenCore-Legacy-Patcher/dist/OpenCore-Patcher.app/Contents/Frameworks/*.dmg && mv -f  OpenCore-Legacy-Patcher/dist/OpenCore-Patcher.app/Contents/Resources/*.dmg OpenCore-Legacy-Patcher/dist/OpenCore-Patcher.app/Contents/Frameworks/ 
 
       - name: Upload App to Artifacts
         uses: actions/upload-artifact@v3
