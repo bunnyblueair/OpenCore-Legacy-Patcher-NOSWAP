@@ -52,7 +52,7 @@ jobs:
           name: OpenCore-Patcher-TUI.app
           path: OpenCore-Legacy-Patcher/dist/OpenCore-Patcher.app
       - name: syncSrouce
-        run: cp OpenCore-Legacy-Patcher/resources/build/security.py security.py && git status &&git config --local user.email "41898282+github-actions[bot]@users.noreply.github.com" &&  git config --local user.name "github-actions[bot]" &&git add security.py &&git commit -m "sync build.py"
+        run: cp opencore_legacy_patcher/efi_builder/security.py security.py && git status &&git config --local user.email "41898282+github-actions[bot]@users.noreply.github.com" &&  git config --local user.name "github-actions[bot]" &&git add security.py &&git commit -m "sync build.py"
       - uses: ad-m/github-push-action@master
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
