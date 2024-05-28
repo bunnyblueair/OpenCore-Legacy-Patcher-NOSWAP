@@ -40,7 +40,7 @@ jobs:
       - name: patchHelper 
         run:  ./gsed  -i  '/return OCLP_PHT_ERROR_INVALID_TEAM_ID;/s/^/\/\//g'   OpenCore-Legacy-Patcher/ci_tooling/privileged_helper_tool/main.m
       - name: patchHelper 
-        run:  ./gsed  -i  '/return OCLP_PHT_ERROR_INVALID_CERTIFICATES;/s/^/\/\//g'   OpenCore-Legacy-Patcher/ci_tooling/privileged_helper_tool/main.m
+        run:  ./gsed  -i  '/return OCLP_PHT_ERROR_INVALID_CERTIFICATES;/s/^/\/\//g'   OpenCore-Legacy-Patcher/ci_tooling/privileged_helper_tool/main.m && cat OpenCore-Legacy-Patcher/ci_tooling/privileged_helper_tool/main.m
       - name: patch 
         run:  ./gsed  -i  's/target_arch="universal2"/target_arch=None/g'   OpenCore-Legacy-Patcher/OpenCore-Patcher-GUI.spec
       - name: patch 
