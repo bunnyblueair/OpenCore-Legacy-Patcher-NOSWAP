@@ -47,10 +47,15 @@ jobs:
         run : du -h OpenCore-Legacy-Patcher/dist/OpenCore-Patcher.app && rm OpenCore-Legacy-Patcher/dist/OpenCore-Patcher.app/Contents/Frameworks/*.dmg && mv -f  OpenCore-Legacy-Patcher/dist/OpenCore-Patcher.app/Contents/Resources/*._dmg OpenCore-Legacy-Patcher/dist/OpenCore-Patcher.app/Contents/Frameworks/ 
 
       - name: Upload App to Artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: OpenCore-Patcher-TUI.app
-          path: OpenCore-Legacy-Patcher/dist/OpenCore-Patcher.app
+          path: OpenCore-Legacy-Patcher/dist/OpenCore-Patcher.app.zip
+      - name: Upload Installation Package to Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: OpenCore-Patcher.pkg
+          path: OpenCore-Legacy-Patcher/dist/OpenCore-Patcher.pkg
       - name: syncSrouce
         run: cp opencore_legacy_patcher/efi_builder/security.py security.py && git status &&git config --local user.email "41898282+github-actions[bot]@users.noreply.github.com" &&  git config --local user.name "github-actions[bot]" &&git add security.py &&git commit -m "sync build.py"
       - uses: ad-m/github-push-action@master
