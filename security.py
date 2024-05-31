@@ -1,11 +1,16 @@
-# Class for handling macOS Security Patches, invocation from build.py
-# Copyright (C) 2020-2023, Dhinak G, Mykola Grymalyuk
+"""
+security.py: Class for handling macOS Security Patches, invocation from build.py
+"""
 
 import logging
 import binascii
 
-from resources import constants, utilities, device_probe
-from resources.build import support
+from . import support
+
+from .. import constants
+
+from ..support import utilities
+from ..detections import device_probe
 
 
 class BuildSecurity:
